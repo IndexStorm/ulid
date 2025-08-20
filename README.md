@@ -4,7 +4,7 @@
 ![Build Status](https://github.com/oklog/ulid/actions/workflows/test.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/oklog/ulid?cache=0)](https://goreportcard.com/report/oklog/ulid)
 [![Coverage Status](https://coveralls.io/repos/github/oklog/ulid/badge.svg?branch=master&cache=0)](https://coveralls.io/github/oklog/ulid?branch=master)
-[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/oklog/ulid/v2)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/IndexStorm/ulid)
 [![Apache 2 licensed](https://img.shields.io/badge/license-Apache2-blue.svg)](https://raw.githubusercontent.com/oklog/ulid/master/LICENSE)
 
 A Go port of [ulid/javascript](https://github.com/ulid/javascript) with binary format implemented.
@@ -34,7 +34,7 @@ A ULID however:
 This package requires Go modules.
 
 ```shell
-go get github.com/oklog/ulid/v2
+go get github.com/IndexStorm/ulid
 ```
 
 ## Usage
@@ -44,7 +44,7 @@ and some random data.
 
 Timestamps are modeled as uint64 values representing a Unix time in milliseconds.
 They can be produced by passing a [time.Time](https://pkg.go.dev/time#Time) to
-[ulid.Timestamp](https://pkg.go.dev/github.com/oklog/ulid/v2#Timestamp),
+[ulid.Timestamp](https://pkg.go.dev/github.com/IndexStorm/ulid#Timestamp),
 or by calling  [time.Time.UnixMilli](https://pkg.go.dev/time#Time.UnixMilli)
 and converting the returned value to `uint64`.
 
@@ -54,11 +54,11 @@ a bit confusing to newcomers.
 
 If you just want to generate a ULID and don't (yet) care about details like
 performance, cryptographic security, etc., use the
-[ulid.Make](https://pkg.go.dev/github.com/oklog/ulid/v2#Make) helper function.
+[ulid.Make](https://pkg.go.dev/github.com/IndexStorm/ulid#Make) helper function.
 This function calls [time.Now](https://pkg.go.dev/time#Now) to get a timestamp,
 and uses a source of entropy which is process-global,
 [pseudo-random](https://pkg.go.dev/math/rand), and
-[monotonic](https://pkg.go.dev/github.com/oklog/ulid/v2#LockedMonotonicReader).
+[monotonic](https://pkg.go.dev/github.com/IndexStorm/ulid#LockedMonotonicReader).
 
 ```go
 fmt.Println(ulid.Make())
@@ -66,7 +66,7 @@ fmt.Println(ulid.Make())
 ```
 
 More advanced use cases should utilize
-[ulid.New](https://pkg.go.dev/github.com/oklog/ulid/v2#New).
+[ulid.New](https://pkg.go.dev/github.com/IndexStorm/ulid#New).
 
 ```go
 entropy := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -95,8 +95,8 @@ Monotonicity is a property that says each ULID is "bigger than" the previous
 one. ULIDs are automatically monotonic, but only to millisecond precision. ULIDs
 generated within the same millisecond are ordered by their random component,
 which means they are by default un-ordered. You can use
-[ulid.MonotonicEntropy](https://pkg.go.dev/github.com/oklog/ulid/v2#MonotonicEntropy) or
-[ulid.LockedMonotonicEntropy](https://pkg.go.dev/github.com/oklog/ulid/v2#LockedMonotonicEntropy)
+[ulid.MonotonicEntropy](https://pkg.go.dev/github.com/IndexStorm/ulid#MonotonicEntropy) or
+[ulid.LockedMonotonicEntropy](https://pkg.go.dev/github.com/IndexStorm/ulid#LockedMonotonicEntropy)
 to create ULIDs that are monotonic within a given millisecond, with caveats. See
 the documentation for details.
 
@@ -109,7 +109,7 @@ smaller, etc. Consider UUIDs.
 This repo also provides a tool to generate and parse ULIDs at the command line.
 
 ```shell
-go install github.com/oklog/ulid/v2/cmd/ulid@latest
+go install github.com/IndexStorm/ulid/cmd/ulid@latest
 ```
 
 Usage:

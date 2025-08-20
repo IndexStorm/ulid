@@ -2,14 +2,15 @@ package main
 
 import (
 	cryptorand "crypto/rand"
+	"encoding/binary"
 	"fmt"
-	mathrand "math/rand"
+	mathrand "math/rand/v2"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/oklog/ulid/v2"
-	getopt "github.com/pborman/getopt/v2"
+	"github.com/IndexStorm/ulid"
+	"github.com/pborman/getopt/v2"
 )
 
 const (
@@ -25,10 +26,10 @@ func main() {
 	fs := getopt.New()
 	var (
 		format = fs.StringLong("format", 'f', "default", "when parsing, show times in this format: default, rfc3339, unix, ms", "<format>")
-		local  = fs.BoolLong("local", 'l', "when parsing, show local time instead of UTC")
-		quick  = fs.BoolLong("quick", 'q', "when generating, use non-crypto-grade entropy")
-		zero   = fs.BoolLong("zero", 'z', "when generating, fix entropy to all-zeroes")
-		help   = fs.BoolLong("help", 'h', "print this help text")
+		local = fs.BoolLong("local", 'l', "when parsing, show local time instead of UTC")
+		quick = fs.BoolLong("quick", 'q', "when generating, use non-crypto-grade entropy")
+		zero  = fs.BoolLong("zero", 'z', "when generating, fix entropy to all-zeroes")
+		help  = fs.BoolLong("help", 'h', "print this help text")
 	)
 	if err := fs.Getopt(os.Args, nil); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -65,9 +66,9 @@ func main() {
 func generate(quick, zero bool) {
 	entropy := cryptorand.Reader
 	if quick {
-		seed := time.Now().UnixNano()
-		source := mathrand.NewSource(seed)
-		entropy = mathrand.New(source)
+		seed := [32]byte{}
+		binary.LittleEndian.PutUint64(seed[:8], uint64(time.Now().UnixNano()))
+		entropy = mathrand.NewChaCha8(seed)
 	}
 	if zero {
 		entropy = zeroReader{}

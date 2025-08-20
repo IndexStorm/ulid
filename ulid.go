@@ -22,7 +22,7 @@ import (
 	"io"
 	"math"
 	"math/bits"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"time"
 )
@@ -129,19 +129,21 @@ func MustNew(ms uint64, entropy io.Reader) ULID {
 // DefaultEntropy as the entropy. It may panic if the given time.Time is too
 // large or too small.
 func MustNewDefault(t time.Time) ULID {
-	return MustNew(Timestamp(t), defaultEntropy)
+	return MustNew(Timestamp(t), DefaultEntropy)
 }
 
-var defaultEntropy = func() io.Reader {
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+var DefaultEntropyFn = func() io.Reader {
+	seed := [32]byte{}
+	binary.LittleEndian.PutUint64(seed[:8], uint64(time.Now().UnixNano()))
+	rng := rand.NewChaCha8(seed)
 	return &LockedMonotonicReader{MonotonicReader: Monotonic(rng, 0)}
-}()
-
-// DefaultEntropy returns a thread-safe per process monotonically increasing
-// entropy source.
-func DefaultEntropy() io.Reader {
-	return defaultEntropy
 }
+
+// DefaultEntropy is a thread-safe per process monotonically increasing
+// entropy source.
+var DefaultEntropy = func() io.Reader {
+	return DefaultEntropyFn()
+}()
 
 // Make returns a ULID with the current time in Unix milliseconds and
 // monotonically increasing entropy for the same millisecond.
@@ -149,7 +151,7 @@ func DefaultEntropy() io.Reader {
 // contention.
 func Make() (id ULID) {
 	// NOTE: MustNew can't panic since DefaultEntropy never returns an error.
-	return MustNew(Now(), defaultEntropy)
+	return MustNew(Now(), DefaultEntropy)
 }
 
 // Parse parses an encoded ULID, returning an error in case of failure.
@@ -577,12 +579,18 @@ func Monotonic(entropy io.Reader, inc uint64) *MonotonicEntropy {
 
 	if rng, ok := entropy.(rng); ok {
 		m.rng = rng
+	} else if src, ok := entropy.(rand.Source); ok {
+		m.rng = rand.New(src)
 	}
 
 	return &m
 }
 
-type rng interface{ Int63n(n int64) int64 }
+type rng interface {
+	// Uint64N returns, as a uint64, a non-negative pseudo-random number in the half-open interval [0,n).
+	// It panics if n == 0.
+	Uint64N(n uint64) uint64
+}
 
 // LockedMonotonicReader wraps a MonotonicReader with a sync.Mutex for safe
 // concurrent use.
@@ -643,7 +651,7 @@ func (m *MonotonicEntropy) random() (inc uint64, err error) {
 	// Fast path for using a underlying rand.Rand directly.
 	if m.rng != nil {
 		// Range: [1, m.inc)
-		return 1 + uint64(m.rng.Int63n(int64(m.inc))), nil
+		return 1 + m.rng.Uint64N(m.inc), nil
 	}
 
 	// bitLen is the maximum bit length needed to encode a value < m.inc.
